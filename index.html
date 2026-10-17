@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e1f" />
+  <title>FlowDesk — Planning &amp; Time Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%237028ff'/%3E%3Cstop offset='100%25' stop-color='%23ff69b4'/%3E%3C/linearGradient%3E%3Cfilter id='s' x='-30%25' y='-30%25' width='180%25' height='180%25'%3E%3CfeDropShadow dx='0' dy='5' stdDeviation='0' flood-color='%234a2fd0'/%3E%3CfeDropShadow dx='0' dy='10' stdDeviation='7' flood-color='%237c5cff' flood-opacity='.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg transform='rotate(-6 50 50)' filter='url(%23s)'%3E%3Crect x='5' y='5' width='90' height='90' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='69' font-family='Outfit,system-ui,sans-serif' font-size='62' font-weight='700' text-anchor='middle' fill='white' stroke='%234a2fd0' stroke-width='.4'%3EF%3C/text%3E%3C/g%3E%3C/svg%3E">
+  <script>
+    // Apply saved theme before first paint (prevents a flash)
+    (function () {
+      try {
+        var t = localStorage.getItem('flowdesk_theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- shared SVG gradient used by the progress rings -->
+  <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="gradMain" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#7c5cff" />
+        <stop offset="0.55" stop-color="#ff5c9d" />
+        <stop offset="1" stop-color="#22d3ee" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- floating background orbs -->
+  <div class="bg-shapes" aria-hidden="true">
+    <span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span>
+  </div>
+
+  <div class="app">
+
+    <!-- ============ SIDEBAR / BOTTOM NAV ============ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo3d">F</div>
+        <div class="brand-text"><strong>FlowDesk</strong><small>Plan · Focus · Win</small></div>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="nav-btn active" data-view="overview"><span class="ico">🏠</span><span class="lbl">Overview</span></button>
+        <button class="nav-btn" data-view="tasks"><span class="ico">✅</span><span class="lbl">Tasks</span><em class="badge" id="taskBadge" hidden>0</em></button>
+        <button class="nav-btn" data-view="planner"><span class="ico">🗓️</span><span class="lbl">Planner</span></button>
+        <button class="nav-btn" data-view="focus"><span class="ico">⏱️</span><span class="lbl">Focus</span></button>
+        <button class="nav-btn" data-view="habits"><span class="ico">🔥</span><span class="lbl">Habits</span></button>
+      </nav>
+
+      <div class="side-foot">
+        <button class="btn-3d sm" id="resetData">Reset data</button>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main">
+
+      <header class="topbar">
+        <div class="top-left">
+          <h1 class="title3d page-title" id="pageTitle">Overview</h1>
+          <p class="muted" id="todayLabel"></p>
+        </div>
+        <div class="top-right">
+          <div class="clock" id="clock" aria-label="Current time">--:--</div>
+          <button class="btn-3d icon" id="themeToggle" aria-label="Switch dark / light mode" title="Dark / Light">
+            <span class="t-ico sun">☀️</span><span class="t-ico moon">🌙</span>
+          </button>
+          <button class="btn-3d primary" id="addTaskTop"><span class="plus">+</span><span class="txt"> New Task</span></button>
+        </div>
+      </header>
+
+      <!-- ================= OVERVIEW ================= -->
+      <section class="view active" id="view-overview">
+
+        <div class="grid hero-grid">
+          <article class="card hero" data-tilt>
+            <div class="hero-text">
+              <h2 class="title3d big" id="greeting">Hello</h2>
+              <p class="hero-sum" id="heroSummary"></p>
+              <p class="quote" id="quote"></p>
+              <div class="hero-actions">
+                <button class="btn-3d primary" data-go="tasks">Plan my tasks</button>
+                <button class="btn-3d" data-go="focus">Start focus</button>
+              </div>
+            </div>
+            <div class="cube-wrap" aria-hidden="true">
+              <div class="cube">
+                <span class="face f1">⏱️</span><span class="face f2">📅</span><span class="face f3">✅</span>
+                <span class="face f4">🎯</span><span class="face f5">🔥</span><span class="face f6">⚡</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card ring-card" data-tilt>
+            <h3>Overall progress</h3>
+            <div class="ring">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="track" cx="60" cy="60" r="52" />
+                <circle class="bar" id="ringBar" cx="60" cy="60" r="52" stroke="url(#gradMain)" />
+              </svg>
+              <div class="ring-center"><strong class="num3d xl" id="ringPct">0%</strong><small>complete</small></div>
+            </div>
+            <p class="muted center" id="ringText"></p>
+          </article>
+        </div>
+
+        <div class="grid stats">
+          <article class="card stat" data-tilt style="--c1:#7c5cff;--c2:#a78bfa">
+            <div class="stat-ico">✅</div>
+            <div><span class="num3d" id="statDone">0</span><p>Completed</p></div>
+          </article>
+          <article class="card stat" data-tilt style="--c1:#22d3ee;--c2:#38bdf8">
+            <div class="stat-ico">📝</div>
+            <div><span class="num3d" id="statPending">0</span><p>Pending</p></div>
+          </article>
+          <article class="card stat" data-tilt style="--c1:#ff5c9d;--c2:#fb7185">
+            <div class="stat-ico">🧠</div>
+            <div><span class="num3d" id="statFocus">0</span><p>Focus min today</p></div>
+          </article>
+          <article class="card stat" data-tilt style="--c1:#fbbf24;--c2:#fb923c">
+            <div class="stat-ico">⚠️</div>
+            <div><span class="num3d" id="statOverdue">0</span><p>Overdue</p></div>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-head"><h3>Today &amp; overdue</h3><button class="link" data-go="tasks">All tasks →</button></div>
+            <ul class="mini-list" id="todayList"></ul>
+          </article>
+
+          <article class="card" data-tilt>
+            <div class="card-head"><h3>Tasks completed · last 7 days</h3></div>
+            <div class="chart" id="weekChart"></div>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-head"><h3>Today's schedule</h3><button class="link" data-go="planner">Open planner →</button></div>
+            <ul class="sched-list" id="schedList"></ul>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><h3>Habits today</h3><button class="link" data-go="habits">Manage →</button></div>
+            <div class="hchips" id="habitChips"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= TASKS ================= -->
+      <section class="view" id="view-tasks">
+        <div class="card toolbar">
+          <div class="search"><span>🔍</span><input id="taskSearch" type="search" placeholder="Search tasks..." autocomplete="off" /></div>
+          <div class="chips" id="taskFilters">
+            <button class="fchip active" data-filter="all">All</button>
+            <button class="fchip" data-filter="active">Active</button>
+            <button class="fchip" data-filter="today">Today</button>
+            <button class="fchip" data-filter="overdue">Overdue</button>
+            <button class="fchip" data-filter="done">Done</button>
+          </div>
+          <select id="taskSort" class="select" aria-label="Sort tasks">
+            <option value="due">Sort: Due date</option>
+            <option value="priority">Sort: Priority</option>
+            <option value="newest">Sort: Newest</option>
+          </select>
+        </div>
+        <ul class="task-list" id="taskList"></ul>
+      </section>
+
+      <!-- ================= PLANNER ================= -->
+      <section class="view" id="view-planner">
+        <div class="grid planner-grid">
+          <article class="card">
+            <div class="planner-head">
+              <div class="date-nav">
+                <button class="btn-3d sm icon" id="dayPrev" aria-label="Previous day">‹</button>
+                <button class="btn-3d sm" id="dayToday">Today</button>
+                <button class="btn-3d sm icon" id="dayNext" aria-label="Next day">›</button>
+                <input type="date" id="dayPick" class="date-input" aria-label="Pick a date" />
+              </div>
+              <button class="btn-3d primary sm" id="addBlock">+ Time block</button>
+            </div>
+            <h3 class="planner-title" id="plannerTitle"></h3>
+            <p class="muted small">Tip: tap an empty spot on the timeline to add a block, tap a block to edit it.</p>
+            <div class="timeline" id="timeline"></div>
+          </article>
+
+          <div class="side-col">
+            <article class="card">
+              <h3>Day summary</h3>
+              <div id="daySummary" class="summary"></div>
+            </article>
+            <article class="card">
+              <h3>Tasks due this day</h3>
+              <ul class="mini-list" id="dayTasks"></ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= FOCUS ================= -->
+      <section class="view" id="view-focus">
+        <div class="grid focus-grid">
+          <article class="card focus-card">
+            <div class="seg" id="modeSeg" role="tablist">
+              <button class="active" data-mode="focus">Focus</button>
+              <button data-mode="short">Short break</button>
+              <button data-mode="long">Long break</button>
+            </div>
+
+            <div class="ring big" id="timerRing">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="track" cx="60" cy="60" r="52" />
+                <circle class="bar" id="timerBar" cx="60" cy="60" r="52" stroke="url(#gradMain)" />
+              </svg>
+              <div class="ring-center">
+                <strong class="time3d" id="timeText">25:00</strong>
+                <small id="modeText">Time to focus</small>
+              </div>
+            </div>
+
+            <div class="timer-actions">
+              <button class="btn-3d primary lg" id="timerToggle">▶ Start</button>
+              <button class="btn-3d lg" id="timerReset">↺ Reset</button>
+            </div>
+            <div class="dots" id="sessionDots" aria-label="Sessions until long break"></div>
+            <p class="muted small center">Tip: press <kbd>Space</kbd> to start / pause.</p>
+          </article>
+
+          <div class="side-col">
+            <article class="card" data-tilt>
+              <h3>Today</h3>
+              <div class="duo">
+                <div><span class="num3d" id="fSessions">0</span><p>Sessions</p></div>
+                <div><span class="num3d" id="fMinutes">0</span><p>Minutes</p></div>
+              </div>
+            </article>
+            <article class="card">
+              <h3>Timer settings <small class="muted">(minutes)</small></h3>
+              <div class="row3">
+                <label class="field"><span>Focus</span><input type="number" id="setFocus" min="1" max="180" /></label>
+                <label class="field"><span>Short</span><input type="number" id="setShort" min="1" max="60" /></label>
+                <label class="field"><span>Long</span><input type="number" id="setLong" min="1" max="90" /></label>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HABITS ================= -->
+      <section class="view" id="view-habits">
+        <article class="card">
+          <form id="habitForm" class="habit-form">
+            <select id="habitEmoji" class="select emoji-select" aria-label="Habit icon">
+              <option>💧</option><option>🏃</option><option>📖</option><option>🧘</option>
+              <option>😴</option><option>💻</option><option>✍️</option><option>🥗</option><option>🎯</option>
+            </select>
+            <input id="habitName" class="input" placeholder="New habit (e.g. Read 20 minutes)" maxlength="40" required />
+            <button class="btn-3d primary" type="submit">Add habit</button>
+          </form>
+        </article>
+        <article class="card habit-card">
+          <div id="habitGrid"></div>
+        </article>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ TASK MODAL ============ -->
+  <div class="modal" id="taskModal" aria-hidden="true">
+    <form class="modal-card" id="taskForm" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+      <header><h3 id="taskModalTitle">New task</h3><button type="button" class="icon-btn sm" data-close aria-label="Close">✕</button></header>
+
+      <label class="field"><span>Title</span><input id="tTitle" required maxlength="80" placeholder="What needs to be done?" autocomplete="off" /></label>
+      <label class="field"><span>Notes</span><textarea id="tNotes" rows="2" maxlength="240" placeholder="Optional details"></textarea></label>
+
+      <div class="row">
+        <label class="field"><span>Priority</span>
+          <select id="tPriority">
+            <option value="high">🔴 High</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+          </select>
+        </label>
+        <label class="field"><span>Category</span>
+          <input id="tCategory" list="catList" maxlength="20" placeholder="Work" />
+          <datalist id="catList"><option>Work</option><option>Study</option><option>Health</option><option>Personal</option><option>Planning</option></datalist>
+        </label>
+      </div>
+
+      <div class="row">
+        <label class="field"><span>Due date</span><input type="date" id="tDue" /></label>
+        <label class="field"><span>Estimate (min)</span><input type="number" id="tEst" min="0" max="1440" step="5" placeholder="30" /></label>
+      </div>
+
+      <footer>
+        <button type="button" class="btn-3d" data-close>Cancel</button>
+        <button type="submit" class="btn-3d primary">Save task</button>
+      </footer>
+    </form>
+  </div>
+
+  <!-- ============ BLOCK MODAL ============ -->
+  <div class="modal" id="blockModal" aria-hidden="true">
+    <form class="modal-card" id="blockForm" role="dialog" aria-modal="true" aria-labelledby="blockModalTitle">
+      <header><h3 id="blockModalTitle">New time block</h3><button type="button" class="icon-btn sm" data-close aria-label="Close">✕</button></header>
+
+      <label class="field"><span>What will you do?</span><input id="bTitle" required maxlength="60" placeholder="Deep work, Gym, Study..." autocomplete="off" /></label>
+
+      <div class="row">
+        <label class="field"><span>Start</span><input type="time" id="bStart" required /></label>
+        <label class="field"><span>End</span><input type="time" id="bEnd" required /></label>
+      </div>
+
+      <div class="field"><span>Color</span><div class="swatches" id="bColors"></div></div>
+
+      <footer>
+        <button type="button" class="btn-3d danger" id="blockDelete" hidden>Delete</button>
+        <button type="button" class="btn-3d" data-close>Cancel</button>
+        <button type="submit" class="btn-3d primary">Save block</button>
+      </footer>
+    </form>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
